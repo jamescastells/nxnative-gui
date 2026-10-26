@@ -35,7 +35,7 @@ nxnative itself is a command-line tool (`scripts/build_ipa_from_nsp.py`). This a
 ### System
 
 - A Mac with **Apple silicon**, running **macOS 27** or later (the deployment target of this app).
-- **Xcode**, installed and opened at least once. nxnative uses its compilers, `git` and the Python 3 that ships with it.
+- **[Xcode](https://apps.apple.com/app/xcode/id497799835)** (free on the Mac App Store), installed and opened at least once. The Command Line Tools alone are not enough, because they don't include the Metal compiler. The app shows an error at startup if Xcode is missing. nxnative uses its compilers, `git` and the Python 3 that ships with it.
 - **[Homebrew](https://brew.sh)**. The app uses it to install the tools below, and shows an error at startup if it's missing. The app cannot install Homebrew for you, because Homebrew's installer needs an administrator password.
 - An internet connection, for downloading nxnative, its dependencies and the Metal Toolchain.
 - **Plenty of disk space and time.** The first conversion of a game can take 30–60 minutes.
