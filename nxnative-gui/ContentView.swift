@@ -13,8 +13,10 @@ struct ContentView: View {
         }
         .frame(minWidth: 800, minHeight: 520)
         .task { runner.prepare() }
-        .sheet(isPresented: $runner.isHomebrewMissing) {
-            HomebrewMissingView()
+        // While a blocking error is up, the window may only be closed (which quits the app).
+        .background(WindowControls(closeOnly: runner.blockingError != nil))
+        .sheet(item: $runner.blockingError) { error in
+            MissingRequirementView(error: error)
                 .interactiveDismissDisabled()
         }
     }
@@ -103,6 +105,28 @@ struct ContentView: View {
             }
         }
         .background(.background.secondary)
+    }
+}
+
+/// Reaches the hosting window to hide its minimize and zoom buttons (and disable minimizing and
+/// resizing, including the Cmd-M shortcut and double-clicking the title bar) while `closeOnly` is true.
+private struct WindowControls: NSViewRepresentable {
+    let closeOnly: Bool
+
+    func makeNSView(context: Context) -> NSView { NSView() }
+
+    func updateNSView(_ view: NSView, context: Context) {
+        // The view has no window yet during the first update, so apply the change on the next turn.
+        DispatchQueue.main.async {
+            guard let window = view.window else { return }
+            window.standardWindowButton(.miniaturizeButton)?.isHidden = closeOnly
+            window.standardWindowButton(.zoomButton)?.isHidden = closeOnly
+            if closeOnly {
+                window.styleMask.remove([.miniaturizable, .resizable])
+            } else {
+                window.styleMask.formUnion([.miniaturizable, .resizable])
+            }
+        }
     }
 }
 
@@ -274,30 +298,30 @@ private struct PathField: View {
 }
 
 /// Blocking error shown at startup when Homebrew is needed but not installed. Close quits the app.
-private struct HomebrewMissingView: View {
+private struct MissingRequirementView: View {
+    let error: BlockingError
+
     var body: some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.largeTitle)
                 .foregroundStyle(.yellow)
-            Text("Homebrew Required")
+            Text(error.title)
                 .font(.headline)
             VStack(spacing: 4) {
-                Text("Homebrew is required to install these tools but wasn't found.")
-                HStack(spacing: 0) {
-                    Text("Install it from ")
-                    Link("https://brew.sh", destination: URL(string: "https://brew.sh")!)
-                    Text(", then reopen the app.")
-                }
+                Text(error.summary)
+                // Markdown links in a Text are clickable and wrap with the rest of the sentence.
+                Text(LocalizedStringKey(error.instructions))
             }
             .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
             // terminate(_:) can be swallowed while a sheet is up; nothing needs saving here, so exit directly.
             Button("Close") { exit(0) }
                 .keyboardShortcut(.defaultAction)
                 .padding(.top, 4)
         }
         .padding(24)
-        .frame(minWidth: 380)
+        .frame(width: 440)
     }
 }
 

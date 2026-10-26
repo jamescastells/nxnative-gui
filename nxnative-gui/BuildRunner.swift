@@ -50,6 +50,40 @@ enum GameLanguage: String, CaseIterable, Identifiable {
     }
 }
 
+/// A missing requirement that stops the app until the user fixes it and reopens it.
+enum BlockingError: String, Identifiable {
+    case xcodeMissing
+    case homebrewMissing
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .xcodeMissing: "Xcode Required"
+        case .homebrewMissing: "Homebrew Required"
+        }
+    }
+
+    var summary: String {
+        switch self {
+        case .xcodeMissing:
+            "Xcode is required to convert games: it provides the Metal shader compiler and the build tools."
+        case .homebrewMissing:
+            "Homebrew is required to install these tools but wasn't found."
+        }
+    }
+
+    /// Markdown, so the link is clickable.
+    var instructions: String {
+        switch self {
+        case .xcodeMissing:
+            "Install it from the [Mac App Store](https://apps.apple.com/app/xcode/id497799835), open it once to finish setup, then reopen the app."
+        case .homebrewMissing:
+            "Install it from [https://brew.sh](https://brew.sh), then reopen the app."
+        }
+    }
+}
+
 /// One line of build output, cleaned up for display.
 struct LogEntry: Identifiable {
     enum Kind {
@@ -143,7 +177,7 @@ final class BuildRunner {
     private(set) var isRunning = false
     private(set) var exitStatus: Int32?
     /// Set when tools need installing but Homebrew isn't available; the UI shows a blocking error.
-    var isHomebrewMissing = false
+    var blockingError: BlockingError?
 
     private var process: Process?
     private var isCancelled = false
@@ -215,6 +249,11 @@ final class BuildRunner {
         isRunning = true
 
         Task {
+            guard requireXcode() else {
+                isRunning = false
+                exitStatus = 1
+                return
+            }
             // Download the repo first: it holds the list of supported games.
             if await syncRepo() != 0 {
                 isRunning = false
@@ -233,9 +272,39 @@ final class BuildRunner {
         }
     }
 
+    /// Shows the blocking "Xcode required" error and returns false if full Xcode isn't installed.
+    private func requireXcode() -> Bool {
+        guard isXcodeInstalled() else {
+            blockingError = .xcodeMissing
+            return false
+        }
+        return true
+    }
+
+    /// True when the active developer directory is a full Xcode (not just the Command Line Tools,
+    /// which have no Metal compiler or `xcodebuild`). Uses `xcode-select`, which never pops up
+    /// the "install developer tools" dialog the way `xcodebuild` or `xcrun` can.
+    private func isXcodeInstalled() -> Bool {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/xcode-select")
+        process.arguments = ["-p"]
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+        guard (try? process.run()) != nil else { return false }
+        let output = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0,
+              let path = String(data: output, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !path.isEmpty else { return false }
+        return !path.hasSuffix("CommandLineTools")
+            && FileManager.default.isExecutableFile(atPath: "\(path)/usr/bin/xcodebuild")
+    }
+
     /// Updates nxnative, then runs the build. Returns the final exit status.
     private func run() async -> Int32 {
         let repo = repoURL
+        guard requireXcode() else { return 1 }
         let status = await syncRepo()
         guard status == 0 else { return status }
 
@@ -369,7 +438,7 @@ final class BuildRunner {
 
         if !missing.brewPackages.isEmpty {
             guard let brew = brewPath else {
-                isHomebrewMissing = true
+                blockingError = .homebrewMissing
                 return false
             }
             append("\nInstalling tools with Homebrew (this can take a few minutes)…\n")
