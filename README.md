@@ -4,7 +4,7 @@ A macOS app that puts a graphical interface on [nxnative](https://github.com/see
 
 nxnative itself is a command-line tool (`scripts/build_ipa_from_nsp.py`). This app does not reimplement any of it. It downloads nxnative for you, makes sure its dependencies are installed, collects the options in a form, runs the script, and shows the progress as it goes.
 
-> **The app is published in the [Releases](../../releases) section of this repository.** Download it from there. You only need to build from source if you want to modify it.
+**The app is published in the [Releases](../../releases) section of this repository.** Download it from there. You only need to build from source if you want to modify it.
 
 ![nxnative-gui converting Mario vs. Donkey Kong into a Mac app](docs/screenshot.png)
 
