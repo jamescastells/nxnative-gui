@@ -13,6 +13,13 @@ struct ContentView: View {
         }
         .frame(minWidth: 800, minHeight: 520)
         .task { runner.prepare() }
+        // Choosing a game enables the options, and AppKit hands the first text field ("App name")
+        // the keyboard focus. Clear it on the next turn, after that happens.
+        .onChange(of: runner.selectedGame) {
+            DispatchQueue.main.async {
+                NSApp.keyWindow?.makeFirstResponder(nil)
+            }
+        }
         // While a blocking error is up, the window may only be closed (which quits the app).
         .background(WindowControls(closeOnly: runner.blockingError != nil))
         .sheet(item: $runner.blockingError) { error in
@@ -28,7 +35,7 @@ struct ContentView: View {
             }
 
             Section("2. Files") {
-                PathField(title: "Game folder (NSP + updates/DLC)", path: $runner.gameFolder, kind: .folder)
+                PathField(title: "Game folder (base + updates/DLC)", path: $runner.gameFolder, kind: .folder)
                 if let warning = runner.gameFolderWarning {
                     Label(warning, systemImage: "exclamationmark.triangle.fill")
                         .font(.caption)
@@ -71,7 +78,7 @@ struct ContentView: View {
                             .foregroundStyle(status == 0 ? .green : .red)
                     }
                 }
-                Text("The first build can take 30–60 minutes. Required tools (dotnet, xcodegen, zstd, spirv-cross, glslang and the Python modules lz4, capstone, fonttools, zstd, and Xcode's Metal Toolchain) are installed automatically when the app opens; Homebrew must already be installed.")
+                Text("The game folder can contain files of these types: .nsp, .xci, .nsz and .xcz. The first build can take 30–60 minutes. Required tools (dotnet, xcodegen, zstd, spirv-cross, glslang and the Python modules lz4, capstone, fonttools, zstd, and Xcode's Metal Toolchain) are installed automatically when the app opens; Homebrew must already be installed.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

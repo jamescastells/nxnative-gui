@@ -367,14 +367,19 @@ final class BuildRunner {
         if let selected = selectedGame, !games.contains(selected) { selectedGame = nil }
     }
 
-    /// A warning when the chosen folder has no NSP for the selected game, or nil if it looks right.
+    /// Game file types the nxnative script can handle.
+    private static let gameFileExtensions: Set<String> = ["nsp", "xci", "nsz", "xcz"]
+
+    /// A warning when the chosen folder has no game file for the selected game, or nil if it looks right.
     var gameFolderWarning: String? {
         guard let game = selectedGame, !gameFolder.isEmpty,
               let files = try? FileManager.default.contentsOfDirectory(atPath: gameFolder) else { return nil }
-        let nsps = files.filter { $0.lowercased().hasSuffix(".nsp") }
-        guard !nsps.isEmpty else { return "No .nsp files found in this folder." }
-        let hasGame = nsps.contains { $0.uppercased().contains(game.titleID) }
-        return hasGame ? nil : "No .nsp in this folder has the title ID of \(game.name) (\(game.titleID))."
+        let gameFiles = files.filter {
+            Self.gameFileExtensions.contains(($0 as NSString).pathExtension.lowercased())
+        }
+        guard !gameFiles.isEmpty else { return "No .nsp, .xci, .nsz or .xcz files found in this folder." }
+        let hasGame = gameFiles.contains { $0.uppercased().contains(game.titleID) }
+        return hasGame ? nil : "No game file in this folder has the title ID of \(game.name) (\(game.titleID))."
     }
 
     /// The environment for child processes. GUI apps don't inherit the shell PATH, so add the
