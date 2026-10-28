@@ -92,6 +92,12 @@ The app owns this folder and resets it to match the upstream repository on every
 
 The app has to run **without the App Sandbox**, because it launches `git`, `python3` and other command-line tools. This is already turned off in the project.
 
+## Anti-piracy policy
+
+This repository does not encourage or condone piracy. nxnative-gui is intended only for people who own the games they convert and have made legal backups of them, using their own console and their own keys.
+
+Any mention of piracy in the Issues section (requests for game files or keys, links to them, or help with pirated copies) will be deleted.
+
 ## License
 
 This project is free and open source, released under the [MIT License](LICENSE). You can use, modify and share it, including commercially, as long as the license notice is kept.
