@@ -1,6 +1,6 @@
 # nxnative-gui
 
-A macOS app that puts a graphical interface on [nxnative](https://github.com/seedds/nxnative), a project that converts Nintendo Switch games (NSP files) into apps that run natively on Apple silicon: a Mac app, or an unsigned IPA for iPhone and iPad.
+A macOS app that puts a graphical interface on [nxnative](https://github.com/seedds/nxnative), a project that converts Nintendo Switch games (NSP, XCI, NSZ and XCZ files) into apps that run natively on Apple silicon: a Mac app, or an unsigned IPA for iPhone and iPad.
 
 nxnative itself is a command-line tool (`scripts/build_ipa_from_nsp.py`). This app does not reimplement any of it. It downloads nxnative for you, makes sure its dependencies are installed, collects the options in a form, runs the script, and shows the progress as it goes.
 
@@ -13,7 +13,7 @@ nxnative itself is a command-line tool (`scripts/build_ipa_from_nsp.py`). This a
 - **Downloads and updates nxnative automatically.** Every time the app opens, it clones nxnative (first run) or updates it to the latest version, so you never handle the repository yourself.
 - **Lists the supported games.** Only games that have a profile in nxnative can be converted. The list is read from nxnative's `dm/games/README.md` on every launch, so it stays current as games are added. You search it by typing.
 - **Installs the requirements.** On launch it checks the tools nxnative needs and installs whatever is missing (see below).
-- **Runs the conversion.** You pick a game, then the folder with its NSP files, your `prod.keys`, and an output folder. The app name defaults to the game's name, and you can edit it.
+- **Runs the conversion.** You pick a game, then the folder with its game files, your `prod.keys`, and an output folder. The app name defaults to the game's name, and you can edit it.
 - **Shows progress as plain status lines** with icons for finished steps, failures and errors, rather than raw terminal output.
 
 ### Options
@@ -21,9 +21,9 @@ nxnative itself is a command-line tool (`scripts/build_ipa_from_nsp.py`). This a
 | Option | Description |
 |---|---|
 | Supported game | The game to convert. Searchable. |
-| Game folder | A folder with the game's base NSP, plus updates and DLC if you have them. |
+| Game folder | A folder with the game's base file, plus updates and DLC if you have them. Accepted file types: `.nsp`, `.xci`, `.nsz` and `.xcz`. |
 | prod.keys | Your Switch encryption keys file. |
-| Output folder | Where the finished app is saved. If empty, nxnative saves it next to the NSP files. |
+| Output folder | Where the finished app is saved. If empty, nxnative saves it next to the game files. |
 | App name | Defaults to the selected game's name. Editable. |
 | Language | The game language, from the 16 languages nxnative supports (default `en-US`). |
 | Platform | **IPA** (iPhone / iPad) or **Mac App**. |
@@ -57,7 +57,7 @@ The first launch can therefore take several minutes, and the Metal Toolchain is 
 
 This project does not include, download or distribute any games or keys. You must provide:
 
-- **The game's NSP file(s)**, dumped from a game you own.
+- **The game's file(s)** (`.nsp`, `.xci`, `.nsz` or `.xcz`), dumped from a game you own.
 - **`prod.keys`**, dumped from your own Switch console.
 
 ### Supported games
@@ -83,7 +83,7 @@ The nxnative copy the app downloads lives in:
 ~/Library/Application Support/<the app's bundle identifier>/nxnative
 ```
 
-The app owns this folder and resets it to match the upstream repository on every launch, so don't make changes inside it. Conversion work files go next to your NSP files, in `<title ID>_build` folders.
+The app owns this folder and resets it to match the upstream repository on every launch, so don't make changes inside it. Conversion work files go next to your game files, in `<title ID>_build` folders.
 
 ## Building from source
 
